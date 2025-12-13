@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: .
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./app:/app/app
+      - ./alembic:/app/alembic
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.accountant-backend.rule=Host(`accountant.pranta.dev`)"
+      - "traefik.http.routers.accountant-backend.entrypoints=websecure"
+      - "traefik.http.routers.accountant-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.accountant-backend.loadbalancer.server.port=8002"
+
+networks:
+  proxy:
+    external: true
