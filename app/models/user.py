@@ -29,12 +29,19 @@ class User(Base):
     last_login = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
 
-    # Future: Premium subscription fields
+    # Premium subscription fields
     subscription_tier = Column(String(50), default="free", nullable=False)
     subscription_expires_at = Column(DateTime, nullable=True)
 
+    # IAP tracking
+    iap_product_id = Column(String(100), nullable=True)  # Google Play product ID
+    iap_purchase_token = Column(Text, nullable=True)  # Purchase token for verification
+    iap_order_id = Column(String(255), nullable=True)  # Order ID from store
+    iap_platform = Column(String(20), nullable=True)  # 'android' or 'ios'
+    iap_purchased_at = Column(DateTime, nullable=True)
+
     # Valid paid subscription tiers
-    PAID_TIERS = ["basic", "premium", "pro"]
+    PAID_TIERS = ["premium_monthly", "premium_yearly", "premium_lifetime"]
 
     @property
     def is_premium(self) -> bool:
@@ -44,7 +51,11 @@ class User(Base):
 
         # Check if user has a valid paid tier
         if self.subscription_tier in self.PAID_TIERS:
-            # If no expiration date set, treat as expired
+            # Lifetime subscription never expires
+            if self.subscription_tier == "premium_lifetime":
+                return True
+
+            # For monthly/yearly, check expiration
             if self.subscription_expires_at is None:
                 return False
             # Check if subscription hasn't expired
