@@ -97,30 +97,35 @@ async def startup_event():
     # Check for required configuration files
     print("[CHECK] Checking required configuration files...")
 
-    required_files = {
-        ".env": ".env file (contains database and API configuration)",
-    }
-
-    # Firebase credentials are optional for development
-    if settings.FIREBASE_AUTH_ENABLED:
-        required_files[settings.FCM_CREDENTIALS_PATH] = "Firebase Admin SDK credentials (required for Google Sign-In)"
-
     missing_files = []
-    for file_path, description in required_files.items():
-        if not os.path.exists(file_path):
-            missing_files.append(f"  [WARNING] {file_path} - {description}")
-            print(f"[WARNING] Missing: {file_path}")
-        else:
-            print(f"[OK] Found: {file_path}")
 
-    if ".env" in [f for f, _ in required_files.items() if not os.path.exists(f)]:
-        error_msg = "\n\n" + "="*70 + "\n"
-        error_msg += "[ERROR] CONFIGURATION ERROR: .env file is missing!\n"
-        error_msg += "="*70 + "\n\n"
-        error_msg += "Please create a .env file based on .env.example\n"
-        error_msg += "="*70 + "\n"
+    # Check .env file
+    if not os.path.exists(".env"):
+        missing_files.append((".env", "Environment configuration file"))
+        print("[ERROR] Missing: .env")
+    else:
+        print("[OK] Found: .env")
 
-        print(error_msg, file=sys.stderr)
+    # Check Firebase credentials (required for Google Sign-In)
+    firebase_creds_path = settings.FCM_CREDENTIALS_PATH
+    if not os.path.exists(firebase_creds_path):
+        missing_files.append((firebase_creds_path, "Firebase Admin SDK credentials (required for Google Sign-In)"))
+        print(f"[ERROR] Missing: {firebase_creds_path}")
+    else:
+        print(f"[OK] Found: {firebase_creds_path}")
+
+    # Exit if any required files are missing
+    if missing_files:
+        print("\n" + "=" * 70, file=sys.stderr)
+        print("[FATAL] CONFIGURATION ERROR: Required files are missing!", file=sys.stderr)
+        print("=" * 70, file=sys.stderr)
+        for file_path, description in missing_files:
+            print(f"  - {file_path}: {description}", file=sys.stderr)
+        print("\nPlease ensure all required files exist:", file=sys.stderr)
+        print("  1. Copy .env.example to .env and configure it", file=sys.stderr)
+        print("  2. Download firebase-admin-sdk.json from Firebase Console:", file=sys.stderr)
+        print("     Project Settings > Service Accounts > Generate new private key", file=sys.stderr)
+        print("=" * 70, file=sys.stderr)
         sys.exit(1)
 
     print(f"[DATABASE] {settings.DATABASE_HOST}:{settings.DATABASE_PORT}/{settings.DATABASE_NAME}")
