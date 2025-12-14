@@ -16,6 +16,7 @@ from app.models.objective import Objective
 from app.models.recurring_config import RecurringConfig
 from app.models.associated_title import AssociatedTitle
 from app.models.payment_method import PaymentMethod
+from app.models.exchange_rate import ExchangeRate
 from app.schemas.sync import (
     SyncPushRequest,
     SyncPushResponse,
@@ -38,6 +39,7 @@ TABLE_MODELS = {
     "recurring_configs": RecurringConfig,
     "associated_titles": AssociatedTitle,
     "payment_methods": PaymentMethod,
+    "exchange_rates": ExchangeRate,
 }
 
 # Sync order (respecting foreign key constraints)
@@ -45,6 +47,7 @@ SYNC_ORDER = [
     "categories",
     "wallets",
     "payment_methods",
+    "exchange_rates",
     "transactions",
     "recurring_configs",
     "budgets",

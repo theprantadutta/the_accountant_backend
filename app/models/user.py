@@ -40,6 +40,10 @@ class User(Base):
     iap_platform = Column(String(20), nullable=True)  # 'android' or 'ios'
     iap_purchased_at = Column(DateTime, nullable=True)
 
+    # User preferences
+    default_currency = Column(String(3), default="USD", nullable=True)  # ISO 4217 currency code
+    onboarding_completed = Column(Boolean, default=False, nullable=False)
+
     # Valid paid subscription tiers
     PAID_TIERS = ["premium_monthly", "premium_yearly", "premium_lifetime"]
 

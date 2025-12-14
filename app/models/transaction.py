@@ -1,5 +1,5 @@
 """Transaction model"""
-from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, ForeignKey, Enum
+from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, ForeignKey, Enum, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
@@ -9,10 +9,23 @@ from app.utils.time_utils import utc_now
 
 
 class TransactionType(str, enum.Enum):
-    """Transaction type enum"""
+    """Transaction type enum (internal processing type)"""
     REGULAR = "regular"
     TRANSFER = "transfer"
     RECURRING_INSTANCE = "recurring_instance"
+
+
+class TransactionSpecialType(int, enum.Enum):
+    """Transaction special type enum (like Cashew)
+
+    Used for filtering and special handling of transactions.
+    """
+    NONE = 0           # Default transaction - no special handling
+    UPCOMING = 1       # Future unpaid transaction - shows in "Upcoming" section
+    SUBSCRIPTION = 2   # Subscription payment - recurring service payment
+    REPETITIVE = 3     # Repetitive transaction - recurring non-subscription
+    CREDIT = 4         # Money lent to someone (they owe you)
+    DEBT = 5           # Money borrowed from someone (you owe them)
 
 
 class Transaction(Base):
@@ -52,6 +65,18 @@ class Transaction(Base):
     # Receipt attachment
     receipt_image_url = Column(String(500), nullable=True)
 
+    # Special transaction type (like Cashew)
+    special_type = Column(Integer, default=0, nullable=True)  # TransactionSpecialType enum value
+
+    # Paid status - for upcoming/debt/credit transactions
+    is_paid = Column(Boolean, default=True, nullable=False)
+
+    # Original due date - stores when transaction was originally due
+    original_due_date = Column(DateTime, nullable=True)
+
+    # Skip this payment (for recurring unpaid transactions)
+    skip_paid = Column(Boolean, default=False, nullable=False)
+
     # Timestamps
     created_at = Column(DateTime, default=utc_now, nullable=False)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
@@ -63,7 +88,11 @@ class Transaction(Base):
     category = relationship("Category", backref="transactions")
     payment_method = relationship("PaymentMethod", backref="transactions")
     paired_transaction = relationship("Transaction", remote_side=[id], backref="paired_with")
-    recurring_config = relationship("RecurringConfig", backref="instances")
+    recurring_config = relationship(
+        "RecurringConfig",
+        foreign_keys=[recurring_config_id],
+        backref="instances"
+    )
 
     @property
     def is_deleted(self) -> bool:
@@ -79,6 +108,26 @@ class Transaction(Base):
     def is_recurring_instance(self) -> bool:
         """Check if this transaction was created from a recurring config"""
         return self.type == TransactionType.RECURRING_INSTANCE
+
+    @property
+    def is_credit(self) -> bool:
+        """Check if this is a credit transaction (money lent)"""
+        return self.special_type == TransactionSpecialType.CREDIT.value
+
+    @property
+    def is_debt(self) -> bool:
+        """Check if this is a debt transaction (money borrowed)"""
+        return self.special_type == TransactionSpecialType.DEBT.value
+
+    @property
+    def is_upcoming(self) -> bool:
+        """Check if this is an upcoming transaction"""
+        return self.special_type == TransactionSpecialType.UPCOMING.value
+
+    @property
+    def is_subscription(self) -> bool:
+        """Check if this is a subscription transaction"""
+        return self.special_type == TransactionSpecialType.SUBSCRIPTION.value
 
     def __repr__(self):
         return f"<Transaction(id={self.id}, title={self.title}, amount={self.amount}, is_income={self.is_income})>"

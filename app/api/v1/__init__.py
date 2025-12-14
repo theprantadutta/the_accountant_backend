@@ -12,7 +12,8 @@ from app.api.v1 import (
     payment_methods,
     associated_titles,
     sync,
-    iap
+    iap,
+    exchange_rates,
 )
 
 api_router = APIRouter()
@@ -27,6 +28,7 @@ api_router.include_router(wallets.router, prefix="/wallets", tags=["wallets"])
 api_router.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
 api_router.include_router(budgets.router, prefix="/budgets", tags=["budgets"])
 api_router.include_router(payment_methods.router, prefix="/payment-methods", tags=["payment-methods"])
+api_router.include_router(exchange_rates.router, prefix="/exchange-rates", tags=["exchange-rates"])
 
 # Features
 api_router.include_router(objectives.router, prefix="/objectives", tags=["objectives", "goals"])

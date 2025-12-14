@@ -14,6 +14,16 @@ class TransactionType(str, Enum):
     RECURRING_INSTANCE = "recurring_instance"
 
 
+class TransactionSpecialType(int, Enum):
+    """Transaction special type enum (like Cashew)"""
+    NONE = 0           # Default transaction
+    UPCOMING = 1       # Future unpaid transaction
+    SUBSCRIPTION = 2   # Subscription payment
+    REPETITIVE = 3     # Repetitive transaction
+    CREDIT = 4         # Money lent to someone
+    DEBT = 5           # Money borrowed from someone
+
+
 class TransactionBase(BaseModel):
     """Base transaction schema"""
     wallet_id: UUID4
@@ -25,6 +35,11 @@ class TransactionBase(BaseModel):
     date: datetime
     is_income: bool = False
     type: TransactionType = TransactionType.REGULAR
+    # Special type fields (Cashew parity)
+    special_type: Optional[int] = 0
+    is_paid: bool = True
+    original_due_date: Optional[datetime] = None
+    skip_paid: bool = False
 
 
 class TransactionCreate(TransactionBase):
@@ -45,6 +60,11 @@ class TransactionUpdate(BaseModel):
     date: Optional[datetime] = None
     is_income: Optional[bool] = None
     receipt_image_url: Optional[str] = Field(None, max_length=500)
+    # Special type fields
+    special_type: Optional[int] = None
+    is_paid: Optional[bool] = None
+    original_due_date: Optional[datetime] = None
+    skip_paid: Optional[bool] = None
 
 
 class TransactionResponse(TransactionBase):
@@ -58,7 +78,7 @@ class TransactionResponse(TransactionBase):
     updated_at: datetime
     deleted_at: Optional[datetime] = None
 
-    @field_serializer('created_at', 'updated_at', 'deleted_at', 'date')
+    @field_serializer('created_at', 'updated_at', 'deleted_at', 'date', 'original_due_date')
     def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
         return to_utc_isoformat(value)
 
@@ -93,3 +113,7 @@ class TransactionFilter(BaseModel):
     min_amount: Optional[Decimal] = None
     max_amount: Optional[Decimal] = None
     search: Optional[str] = None  # Search in title and notes
+    # Special type filters
+    special_type: Optional[int] = None
+    is_paid: Optional[bool] = None
+    include_credit_debt: Optional[bool] = None  # Include credit & debt transactions

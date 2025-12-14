@@ -9,6 +9,7 @@ from app.models.budget import Budget, BudgetPeriod
 from app.models.objective import Objective, ObjectiveType, objective_transactions
 from app.models.associated_title import AssociatedTitle
 from app.models.sync_log import SyncLog
+from app.models.exchange_rate import ExchangeRate
 
 __all__ = [
     "User",
@@ -26,4 +27,5 @@ __all__ = [
     "objective_transactions",
     "AssociatedTitle",
     "SyncLog",
+    "ExchangeRate",
 ]

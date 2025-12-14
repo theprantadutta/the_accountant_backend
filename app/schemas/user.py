@@ -37,6 +37,10 @@ class UserResponse(UserBase):
     photo_url: Optional[str] = None
     email_verified: bool
 
+    # User preferences
+    default_currency: Optional[str] = "USD"
+    onboarding_completed: bool = False
+
     @field_serializer('created_at')
     def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
         return to_utc_isoformat(value)
