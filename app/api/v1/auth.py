@@ -1,10 +1,8 @@
 """Authentication endpoints"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Optional
-from pydantic import BaseModel
 from app.database import get_db
-from app.schemas.user import UserCreate, UserLogin, UserResponse
+from app.schemas.user import UserCreate, UserLogin, UserResponse, UserProfileUpdate
 from app.schemas.auth import Token
 from app.services.auth_service import AuthService
 from app.core.dependencies import get_current_user
@@ -106,12 +104,6 @@ async def logout(
     return {"message": "Logged out successfully"}
 
 
-class UserProfileUpdate(BaseModel):
-    """User profile update request"""
-    display_name: Optional[str] = None
-    photo_url: Optional[str] = None
-
-
 @router.put("/me", response_model=UserResponse)
 async def update_user_profile(
     profile_data: UserProfileUpdate,
@@ -123,6 +115,8 @@ async def update_user_profile(
 
     - **display_name**: Update display name
     - **photo_url**: Update profile photo URL
+    - **default_currency**: Update default currency
+    - **onboarding_completed**: Mark onboarding as completed
 
     Requires: Bearer token in Authorization header
     """
@@ -131,6 +125,12 @@ async def update_user_profile(
 
     if profile_data.photo_url is not None:
         current_user.photo_url = profile_data.photo_url
+
+    if profile_data.default_currency is not None:
+        current_user.default_currency = profile_data.default_currency
+
+    if profile_data.onboarding_completed is not None:
+        current_user.onboarding_completed = profile_data.onboarding_completed
 
     db.commit()
     db.refresh(current_user)

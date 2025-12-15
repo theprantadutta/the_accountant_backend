@@ -55,6 +55,14 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
 
 
+class UserProfileUpdate(BaseModel):
+    """Schema for updating user profile via PUT /auth/me"""
+    display_name: Optional[str] = None
+    photo_url: Optional[str] = None
+    default_currency: Optional[str] = None
+    onboarding_completed: Optional[bool] = None
+
+
 # Firebase Auth schemas
 class FirebaseAuthRequest(BaseModel):
     """Schema for Firebase token authentication"""
