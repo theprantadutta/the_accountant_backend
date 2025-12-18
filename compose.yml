@@ -1,5 +1,5 @@
 services:
-  backend:
+  the-accountant-backend:
     build: .
     env_file:
       - .env
